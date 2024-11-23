@@ -42,6 +42,7 @@ def run_fuzzing(conf, st_read_fd, ctl_write_fd, trace_bits):
         print("forkserver is up! starting fuzzing... press Ctrl+C to stop")
 
     seed_queue = []
+    global_bitmap = {}
     # do the dry run, check if the target is working and initialize the seed queue
     shutil.copytree(conf['seeds_folder'], conf['queue_folder'])
     for i, seed_file in enumerate(os.listdir(conf['queue_folder'])):
@@ -59,12 +60,13 @@ def run_fuzzing(conf, st_read_fd, ctl_write_fd, trace_bits):
             print(f"Seed {seed_file} caused a crash during the dry run")
             sys.exit(0)
 
-        new_edge_covered, coverage = check_coverage(trace_bits)
+        new_edge_covered, coverage = check_coverage(trace_bits, global_bitmap)
 
         new_seed = Seed(seed_path, i, coverage, exec_time)
 
         seed_queue.append(new_seed)
 
+    # global_bitmap = {}
     print("Dry run finished. Now starting the fuzzing loop...")
     # start the fuzzing loop
     while True:
@@ -95,7 +97,7 @@ def run_fuzzing(conf, st_read_fd, ctl_write_fd, trace_bits):
                 continue
 
             print("Found new coverage!")
-            new_edge_covered, coverage = check_coverage(trace_bits)
+            new_edge_covered, coverage = check_coverage(trace_bits, global_bitmap)
 
             # coverage is the total hits
             if new_edge_covered or coverage > 0:

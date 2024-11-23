@@ -6,10 +6,6 @@ SHM_ENV_VAR   = "__AFL_SHM_ID"
 MAP_SIZE_POW2 = 16
 MAP_SIZE = (1 << MAP_SIZE_POW2)
 
-global_bitmap = {}
-
-
-
 def setup_shm(libc):
     # map functions
     shmget = libc.shmget
@@ -54,12 +50,10 @@ def check_crash(status_code):
     return crashed
 
 
-def check_coverage(trace_bits):
+def check_coverage(trace_bits, global_bitmap):
     raw_bitmap = ctypes.string_at(trace_bits, MAP_SIZE)
     total_hits = 0
     new_edge_covered = False
-
-    global global_bitmap
 
     # assumes that the xor was already instrumented in the fuzzing process
     # then it treats this bit map like an set of edges
