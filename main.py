@@ -61,18 +61,19 @@ def run_fuzzing(conf, st_read_fd, ctl_write_fd, trace_bits):
             sys.exit(0)
 
         new_edge_covered, coverage = check_coverage(trace_bits, global_bitmap)
+        file_size = os.path.getsize(conf['current_input'])
 
-        new_seed = Seed(seed_path, i, coverage, exec_time)
+        new_seed = Seed(seed_path, i, coverage, exec_time, file_size)
 
         seed_queue.append(new_seed)
 
-    # global_bitmap = {}
     print("Dry run finished. Now starting the fuzzing loop...")
     # start the fuzzing loop
     while True:
-        selected_seed = select_next_seed(seed_queue)
+        selected_seed = select_next_seed(seed_queue, len(global_bitmap))
 
-        power_schedule = get_power_schedule(selected_seed)
+        stats = calculate_statistics(seed_queue)
+        power_schedule = get_power_schedule(selected_seed, *stats)
 
         # generate new test inputs according to the power schedule for the selected seed
         for i in range(0, power_schedule):
@@ -100,15 +101,17 @@ def run_fuzzing(conf, st_read_fd, ctl_write_fd, trace_bits):
             new_edge_covered, coverage = check_coverage(trace_bits, global_bitmap)
 
             # coverage is the total hits
-            if new_edge_covered or coverage > 0:
+            if new_edge_covered:
                 # TODO: save the current test input as a new seed
                 filename = str(len(os.listdir(conf['queue_folder'])))
                 queue_path = os.path.join(conf['queue_folder'], filename)
 
                 # Make the file name and path
                 shutil.copyfile(conf['current_input'], queue_path)
+                file_size = os.path.getsize(conf['current_input'])
 
-                new_seed = Seed(queue_path, len(seed_queue), coverage, exec_time)
+
+                new_seed = Seed(queue_path, filename, coverage, exec_time, file_size)
                 seed_queue.append(new_seed)
 
                 continue
