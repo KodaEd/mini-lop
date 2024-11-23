@@ -3,6 +3,7 @@ import signal
 import threading
 import time
 from feedback import clear_shm
+import random
 
 # this is the timeout per execution in milliseconds
 # in practice, this is better to be implemented as a configurable option in the config file
@@ -50,8 +51,11 @@ def run_target(ctl_write_fd, st_read_fd, trace_bits):
     end_time = time.time()
     exec_time = end_time - start_time
     # print(f"status is {status_code}")
-    # You can uncomment the following lines to better observe the execution logs when debugging
+    # # You can uncomment the following lines to better observe the execution logs when debugging
     # print(f"Execution time: {float(exec_time*1000)} ms")
     # time.sleep(1)
+
+    # return (11, exec_time) if random.random() < 0.01 else (0, exec_time)
+
 
     return status_code, exec_time

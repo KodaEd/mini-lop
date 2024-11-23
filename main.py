@@ -78,7 +78,7 @@ def run_fuzzing(conf, st_read_fd, ctl_write_fd, trace_bits):
         # generate new test inputs according to the power schedule for the selected seed
         for i in range(0, power_schedule):
             # TODO: implement the strategy for selecting a mutation operator
-            havoc_mutation(conf, selected_seed)
+            havoc_mutation(conf, selected_seed, seed_queue)
             # run the target with the mutated seed
             status_code, exec_time = run_target(ctl_write_fd, st_read_fd, trace_bits)
 
@@ -88,7 +88,6 @@ def run_fuzzing(conf, st_read_fd, ctl_write_fd, trace_bits):
 
             if check_crash(status_code):
                 print(f"Found a crash, status code is {status_code}")
-                # TODO: save the crashing input
                 filename = str(len(os.listdir(conf['crashes_folder'])))
                 crash_path = os.path.join(conf['crashes_folder'], filename)
 
@@ -102,14 +101,12 @@ def run_fuzzing(conf, st_read_fd, ctl_write_fd, trace_bits):
 
             # coverage is the total hits
             if new_edge_covered:
-                # TODO: save the current test input as a new seed
                 filename = str(len(os.listdir(conf['queue_folder'])))
                 queue_path = os.path.join(conf['queue_folder'], filename)
 
                 # Make the file name and path
                 shutil.copyfile(conf['current_input'], queue_path)
                 file_size = os.path.getsize(conf['current_input'])
-
 
                 new_seed = Seed(queue_path, filename, coverage, exec_time, file_size)
                 seed_queue.append(new_seed)
