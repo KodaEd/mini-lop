@@ -7,7 +7,7 @@ from feedback import clear_shm
 # this is the timeout per execution in milliseconds
 # in practice, this is better to be implemented as a configurable option in the config file
 # but for now, we hardcode it here (to have fewer changes in the code)
-TIMEOUT = 100
+TIMEOUT = 10000
 TIMEOUT_SEC = float(TIMEOUT/10000)
 
 

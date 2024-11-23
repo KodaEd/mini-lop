@@ -1,10 +1,12 @@
 import random
 
+dictionary = {}
 
 def select_next_seed(seed_queue):
-
     # this is a dummy implementation, it just randomly selects a seed
     # TODO: implement the "favor" feature of AFL
+    
+
     selected = random.choice(seed_queue)
 
     return selected

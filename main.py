@@ -86,13 +86,29 @@ def run_fuzzing(conf, st_read_fd, ctl_write_fd, trace_bits):
             if check_crash(status_code):
                 print(f"Found a crash, status code is {status_code}")
                 # TODO: save the crashing input
+                filename = str(len(os.listdir(conf['crashes_folder'])))
+                crash_path = os.path.join(conf['crashes_folder'], filename)
+
+                # Make the file name and path
+                shutil.copyfile(conf['current_input'], crash_path)
+
                 continue
 
+            print("Found new coverage!")
             new_edge_covered, coverage = check_coverage(trace_bits)
 
-            if new_edge_covered:
-                print("Found new coverage!")
+            # coverage is the total hits
+            if new_edge_covered or coverage > 0:
                 # TODO: save the current test input as a new seed
+                filename = str(len(os.listdir(conf['queue_folder'])))
+                queue_path = os.path.join(conf['queue_folder'], filename)
+
+                # Make the file name and path
+                shutil.copyfile(conf['current_input'], queue_path)
+
+                new_seed = Seed(queue_path, len(seed_queue), coverage, exec_time)
+                seed_queue.append(new_seed)
+
                 continue
 
 

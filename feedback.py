@@ -6,7 +6,7 @@ SHM_ENV_VAR   = "__AFL_SHM_ID"
 MAP_SIZE_POW2 = 16
 MAP_SIZE = (1 << MAP_SIZE_POW2)
 
-global_bitmap = bytearray(MAP_SIZE)
+global_bitmap = {}
 
 
 
@@ -68,8 +68,12 @@ def check_coverage(trace_bits):
         if byte != 0:
             total_hits += 1
             if id not in global_bitmap:
-                global_bitmap.insert(id)
+                global_bitmap[id] = 0
                 new_edge_covered = True
+            else:
+                global_bitmap[id] += 1
     print(f'covered {total_hits} edges')
+
+    print(f'Total unique edges: {len(global_bitmap)}')
 
     return new_edge_covered, total_hits
