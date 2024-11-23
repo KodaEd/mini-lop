@@ -6,6 +6,9 @@ SHM_ENV_VAR   = "__AFL_SHM_ID"
 MAP_SIZE_POW2 = 16
 MAP_SIZE = (1 << MAP_SIZE_POW2)
 
+global_bitmap = bytearray(MAP_SIZE)
+
+
 
 def setup_shm(libc):
     # map functions
@@ -56,15 +59,17 @@ def check_coverage(trace_bits):
     total_hits = 0
     new_edge_covered = False
 
-    for i in raw_bitmap:
-        # TODO: maintain a global coverage of all seeds, check if this seed covers a new edge
-        if i != 0:
-            total_hits += 1
-    print(f'covered {total_hits} edges')
+    global global_bitmap
 
-    # this is a dummy implementation for demonstration purpose (add some variation for new edges)
-    # should remove this once implemented the real logic of checking new edges
-    if total_hits % 2 == 0:
-        new_edge_covered = True
+    # assumes that the xor was already instrumented in the fuzzing process
+    # then it treats this bit map like an set of edges
+    for id, byte in enumerate(raw_bitmap):
+        # If means that it already hit
+        if byte != 0:
+            total_hits += 1
+            if id not in global_bitmap:
+                global_bitmap.insert(id)
+                new_edge_covered = True
+    print(f'covered {total_hits} edges')
 
     return new_edge_covered, total_hits
