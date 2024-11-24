@@ -7,17 +7,6 @@ class SpliceMutator:
         self.havoc_mutator = havoc_mutator or HavocMutator()
         
     def mutate(self, seed, queue, conf):
-        """
-        Performs splice mutation by combining parts of two different seeds and applying havoc mutation.
-        
-        Args:
-            seed: Current seed being mutated
-            queue: List of available seeds
-            conf: Configuration dictionary containing paths and settings
-            
-        Yields:
-            bytearray: Each mutated test input
-        """
         # Get list of other valid seeds (excluding current seed)
         other_seeds = [s for s in queue if s.path != seed.path and os.path.exists(s.path)]
         if not other_seeds:
@@ -33,39 +22,38 @@ class SpliceMutator:
         if len(data1) < 2:  # Need at least 2 bytes to splice
             return None
             
-        # Try up to 5 random other seeds
-        for _ in range(5):
-            other_seed = random.choice(other_seeds)
-            try:
-                with open(other_seed.path, 'rb') as f:
-                    data2 = bytearray(f.read())
-                    
-                if len(data2) < 2:
-                    continue
-                    
-                # Generate splice points for both seeds
-                split1 = random.randint(1, len(data1) - 1)
-                split2 = random.randint(1, len(data2) - 1)
+        # Choose just one other seed randomly
+        other_seed = random.choice(other_seeds)
+        try:
+            with open(other_seed.path, 'rb') as f:
+                data2 = bytearray(f.read())
                 
-                # Create new test input by combining first half of data1 with second half of data2
-                spliced_data = data1[:split1] + data2[split2:]
+            if len(data2) < 2:
+                return None
                 
-                # Write spliced data to temporary file for havoc mutation
-                with open(conf['current_input'], 'wb') as f:
-                    f.write(spliced_data)
+            # Split both files at their midpoints
+            split1 = len(data1) // 2
+            split2 = len(data2) // 2
+            
+            # Create new test input by combining first half of data1 with second half of data2
+            spliced_data = data1[:split1] + data2[split2:]
+            
+            # Write spliced data to temporary file for havoc mutation
+            with open(conf['current_input'], 'wb') as f:
+                f.write(spliced_data)
+            
+            # Apply havoc mutation to the spliced data
+            temp_seed = type('Seed', (), {'path': conf['current_input']})
+            self.havoc_mutator.mutate(conf, temp_seed, queue)
+            
+            # Read back the havoc-mutated data
+            with open(conf['current_input'], 'rb') as f:
+                mutated_data = bytearray(f.read())
                 
-                # Apply havoc mutation to the spliced data
-                temp_seed = type('Seed', (), {'path': conf['current_input']})
-                self.havoc_mutator.mutate(conf, temp_seed, queue)
+            return mutated_data
                 
-                # Read back the havoc-mutated data
-                with open(conf['current_input'], 'rb') as f:
-                    mutated_data = bytearray(f.read())
-                    
-                yield mutated_data
-                
-            except (IOError, OSError):
-                continue
+        except (IOError, OSError):
+            return None
 
 class DeterministicMutator:
     def __init__(self):
@@ -75,10 +63,6 @@ class DeterministicMutator:
         self.min_ratio = 0.05
 
     def mutate(self, conf, seed, queue=None, mutation_type=None):
-        if mutation_type == 'splice':
-            # Splice mutation is handled directly in havoc_mutation
-            return None
-
         with open(seed.path, 'rb') as f:
             data = bytearray(f.read())
             
@@ -86,14 +70,14 @@ class DeterministicMutator:
             return None
 
         if mutation_type is None:
-            mutations = ['trim', 'bit_flip', 'byte_flip', 'arithmetic', 
+            mutations = ['flip', 'bit_flip', 'splice', 'byte_flip', 'arithmetic', 
                         'interesting_value', 'chunk_replacement', 'duplicate_chunk']
         else:
             mutations = [mutation_type]
             
         for mutation in mutations:
-            if mutation == 'trim':
-                data = self._trim_mutation(data)
+            if mutation == 'flip':
+                data = self._flip_mutation(data)
             elif mutation == 'bit_flip':
                 data = self._single_bit_flip(data)
             elif mutation == 'byte_flip':
@@ -106,6 +90,10 @@ class DeterministicMutator:
                 data = self._single_chunk_replacement(data)
             elif mutation == 'duplicate_chunk':
                 data = self._single_chunk_duplicate(data)
+            elif mutation == 'splice' and queue:
+                spliced = self._splice_mutation(data, seed, queue)
+                if spliced:
+                    data = spliced
 
         with open(conf['current_input'], 'wb') as f:
             f.write(data)
@@ -205,7 +193,7 @@ class DeterministicMutator:
         data[dst_pos:dst_pos] = chunk
         return data
 
-    def _trim_mutation(self, data):
+    def _flip_mutation(self, data):
         if len(data) < 4:
             return data
         
@@ -306,11 +294,6 @@ class HavocMutator:
         return True
 
 def havoc_mutation(conf, seed, queue=None):
-    """
-    Main mutation function with priorities:
-    - 90% chance for single deterministic mutation (weighted towards trim/splice)
-    - 10% chance for havoc (multiple random mutations)
-    """
     strategy_roll = random.random()
     mutator = DeterministicMutator()
     havoc = HavocMutator()
@@ -318,8 +301,9 @@ def havoc_mutation(conf, seed, queue=None):
     
     if strategy_roll < 0.90:  # 90% chance for single deterministic mutation
         weighted_mutations = [
-            ('trim', 4),
-            ('splice', 4 if queue and len(queue) > 1 else 0),
+            ('flip', 4),
+            ('splice', 5 if queue and len(queue) > 1 else 0),
+            ('splice_havoc', 1 if queue and len(queue) > 1 else 0),
             ('bit_flip', 1),
             ('byte_flip', 1),
             ('arithmetic', 1),
@@ -337,12 +321,13 @@ def havoc_mutation(conf, seed, queue=None):
         for mutation_type, weight in possible_mutations:
             current_weight += weight
             if r <= current_weight:
-                if mutation_type == 'splice':
+                if mutation_type == 'splice_havoc':
                     # Handle splice mutation
-                    for mutated_data in splice.mutate(seed, queue, conf):
-                        return mutated_data
-                    # If splice fails, fall back to trim
-                    return mutator.mutate(conf, seed, queue, 'trim')
+                    result = splice.mutate(seed, queue, conf)
+                    if result is None:
+                        # If splice fails, return None or could try havoc
+                        return None
+                    return result
                 else:
                     return mutator.mutate(conf, seed, queue, mutation_type)
     

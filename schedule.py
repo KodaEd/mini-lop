@@ -7,7 +7,6 @@ from typing import List  # Import List from typing module
 priority_set = set()
 queue_position = 0
 
-# this is AI GENERATED CODE from claude
 def sort_seeds(seed_queue: List[seed.Seed]):
     def seed_sort_key(seed: seed.Seed):
         # Create tuple for sorting
@@ -22,6 +21,8 @@ def select_next_seed(seed_queue: List[seed.Seed], num_branches):
 
     # Check if we need to start a new cycle
     if queue_position >= len(seed_queue):
+        # print("New Cycle")
+
         # Reset for new cycle
         priority_set.clear()
         queue_position = 0
