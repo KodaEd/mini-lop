@@ -10,9 +10,6 @@ class DeterministicMutator:
         self.min_ratio = 0.05
 
     def mutate(self, conf, seed, queue=None, mutation_type=None):
-        """
-        Performs a single mutation of specified type, or one of each type if None.
-        """
         with open(seed.path, 'rb') as f:
             data = bytearray(f.read())
             
@@ -52,7 +49,6 @@ class DeterministicMutator:
         return data
 
     def _single_bit_flip(self, data):
-        """Single bit flip at random position"""
         if not data:
             return data
         pos = random.randint(0, len(data) - 1)
@@ -61,7 +57,6 @@ class DeterministicMutator:
         return data
 
     def _single_byte_flip(self, data):
-        """Single byte flip with random size"""
         if not data:
             return data
         size = random.choice([1, 2, 4])
@@ -73,7 +68,6 @@ class DeterministicMutator:
         return data
 
     def _single_arithmetic(self, data):
-        """Single arithmetic operation at random position"""
         if len(data) < 2:
             return data
         sizes = [(2, 'h'), (4, 'i'), (8, 'q')]
@@ -93,7 +87,6 @@ class DeterministicMutator:
         return data
 
     def _single_interesting_value(self, data):
-        """Single interesting value insertion"""
         if not data:
             return data
         interesting_sets = [
@@ -119,7 +112,6 @@ class DeterministicMutator:
         return data
 
     def _single_chunk_replacement(self, data):
-        """Single chunk replacement"""
         if len(data) < 4:
             return data
         chunk_size = random.choice([2, 4, 8])
@@ -136,7 +128,6 @@ class DeterministicMutator:
         return data
 
     def _single_chunk_duplicate(self, data):
-        """Single chunk duplication"""
         if len(data) < 2:
             return data
         chunk_size = random.choice([1, 2, 4, 8])
@@ -151,7 +142,6 @@ class DeterministicMutator:
         return data
 
     def _trim_mutation(self, data):
-        """Simplified trim that removes one chunk"""
         if len(data) < 4:
             return data
         
@@ -166,7 +156,6 @@ class DeterministicMutator:
         return data[:pos] + data[pos + chunk_size:]
 
     def _splice_mutation(self, data, seed, queue):
-        """Simple splice between two inputs"""
         if len(data) < 2:
             return None
             
@@ -195,9 +184,6 @@ class HavocMutator:
         self.deterministic_mutator = DeterministicMutator()
         
     def mutate(self, conf, seed, queue=None):
-        """
-        Applies multiple random mutations one after another
-        """
         mutations = ['bit_flip', 'byte_flip', 'arithmetic', 
                     'interesting_value', 'chunk_replacement', 'duplicate_chunk']
         
