@@ -9,18 +9,8 @@ queue_position = 0
 
 # this is AI GENERATED CODE from claude
 def sort_seeds(seed_queue: List[seed.Seed]):
-    """
-    Sort seeds based on multiple criteria:
-    1. Favored seeds come first
-    2. Among seeds of same favored status, sort by (exec_time * file size)
-    3. Break ties using seed_id (to maintain stable ordering)
-    """
     def seed_sort_key(seed: seed.Seed):
-        
-        # Create tuple for sorting:
-        # - First element: favored status (negated so favored=1 comes before unfavored=0)
-        # - Second element: execution time * file size (smaller is better)
-        # - Third element: seed_id (for stable sorting)
+        # Create tuple for sorting
         return (-seed.favored, seed.exec_time * seed.file_size, seed.seed_id)
     
     # Sort the queue in-place using the custom key
@@ -29,10 +19,6 @@ def sort_seeds(seed_queue: List[seed.Seed]):
 
 def select_next_seed(seed_queue: List[seed.Seed], num_branches):
     global queue_position, priority_set
-
-    # try to print the seeds
-    # for i in seed_queue:
-    #     print(i)
 
     # Check if we need to start a new cycle
     if queue_position >= len(seed_queue):
