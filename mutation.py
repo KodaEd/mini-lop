@@ -229,27 +229,38 @@ class HavocMutator:
 def havoc_mutation(conf, seed, queue=None):
     """
     Main mutation function with priorities:
-    - For deterministic (90%): Pick one of trim, splice, or single deterministic mutation
-    - For havoc (10%): Apply multiple random deterministic mutations
+    - 90% chance for single deterministic mutation (weighted towards trim/splice)
+    - 10% chance for havoc (multiple random mutations)
     """
     strategy_roll = random.random()
     mutator = DeterministicMutator()
     
     if strategy_roll < 0.90:  # 90% chance for single deterministic mutation
-        # First try trim if not done
-        if not hasattr(seed, 'trimmed'):
-            seed.trimmed = True
-            return mutator.mutate(conf, seed, queue, 'trim')
-            
-        # Then try splice if possible
-        if queue and len(queue) > 1 and random.random() < 0.33:  # 33% chance for splice when possible
-            return mutator.mutate(conf, seed, queue, 'splice')
-            
-        # Otherwise pick one deterministic mutation
-        mutations = ['bit_flip', 'byte_flip', 'arithmetic', 
-                    'interesting_value', 'chunk_replacement', 'duplicate_chunk']
-        selected_mutation = random.choice(mutations)
-        return mutator.mutate(conf, seed, queue, selected_mutation)
+        # List of all possible mutations with weights
+        # [mutation_type, weight]
+        weighted_mutations = [
+            ('trim', 4),
+            ('splice', 4 if queue and len(queue) > 1 else 0),
+            ('bit_flip', 1),
+            ('byte_flip', 1),
+            ('arithmetic', 1),
+            ('interesting_value', 1),
+            ('chunk_replacement', 1),
+            ('duplicate_chunk', 1)
+        ]
+        
+        # Filter out splice if no queue and calculate total weight
+        possible_mutations = [m for m in weighted_mutations if m[1] > 0]
+        total_weight = sum(m[1] for m in possible_mutations)
+        
+        # Random selection based on weights
+        r = random.uniform(0, total_weight)
+        current_weight = 0
+        
+        for mutation_type, weight in possible_mutations:
+            current_weight += weight
+            if r <= current_weight:
+                return mutator.mutate(conf, seed, queue, mutation_type)
     
     else:  # 10% chance for havoc
         havoc = HavocMutator()

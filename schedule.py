@@ -132,11 +132,11 @@ def get_power_schedule(seed, total_cal_us=0, total_cal_cycles=0, total_bitmap_si
     # For handicap and depth adjustments, we'll need to add these fields to your Seed class
     # For now, we'll use a simplified version
     
-    HAVOC_MAX_MULT = 1000
+    HAVOC_MAX_MULT = 200
     
     # Scale the perf_score to actual number of iterations
     # The division by 100 is to normalize the perf_score which started at base 100
-    power = min(int((perf_score / 100) * HAVOC_MAX_MULT), HAVOC_MAX_MULT)
+    power = min(int((perf_score / 100)), HAVOC_MAX_MULT)
     
     # Ensure we always do at least one iteration
     return max(power, 1)

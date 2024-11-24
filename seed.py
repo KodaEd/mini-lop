@@ -8,6 +8,10 @@ class Seed:
         self.file_size = file_size
         # by default, a seed is not marked as favored
         self.favored = 0
+        self.crash = False
+
+    def mark_crash(self):
+        self.crash = True
 
     def mark_visited(self):
         self.visited = True
