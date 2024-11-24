@@ -53,7 +53,7 @@ def run_target(ctl_write_fd, st_read_fd, trace_bits):
     # print(f"status is {status_code}")
     # # You can uncomment the following lines to better observe the execution logs when debugging
     # print(f"Execution time: {float(exec_time*1000)} ms")
-    # time.sleep(1)
+    # time.sleep(0.2)
 
     # return (11, exec_time) if random.random() < 0.01 else (0, exec_time)
 

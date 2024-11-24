@@ -74,6 +74,8 @@ def run_fuzzing(conf, st_read_fd, ctl_write_fd, trace_bits):
 
         stats = calculate_statistics(seed_queue)
         power_schedule = get_power_schedule(selected_seed, *stats)
+        # print(global_bitmap)
+        # print(f"Power schedule: {power_schedule}")
 
         # generate new test inputs according to the power schedule for the selected seed
         for i in range(0, power_schedule):
@@ -96,11 +98,11 @@ def run_fuzzing(conf, st_read_fd, ctl_write_fd, trace_bits):
 
                 continue
 
-            print("Found new coverage!")
             new_edge_covered, coverage = check_coverage(trace_bits, global_bitmap)
 
             # coverage is the total hits
             if new_edge_covered:
+                # print("Found new coverage!")
                 filename = str(len(os.listdir(conf['queue_folder'])))
                 queue_path = os.path.join(conf['queue_folder'], filename)
 

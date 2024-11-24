@@ -30,6 +30,10 @@ def sort_seeds(seed_queue: List[seed.Seed]):
 def select_next_seed(seed_queue: List[seed.Seed], num_branches):
     global queue_position, priority_set
 
+    # try to print the seeds
+    # for i in seed_queue:
+    #     print(i)
+
     # Check if we need to start a new cycle
     if queue_position >= len(seed_queue):
         # Reset for new cycle
@@ -128,9 +132,7 @@ def get_power_schedule(seed, total_cal_us=0, total_cal_cycles=0, total_bitmap_si
     # For handicap and depth adjustments, we'll need to add these fields to your Seed class
     # For now, we'll use a simplified version
     
-    # Convert performance score to actual number of iterations
-    # Using a reasonable maximum of 128 iterations as default
-    HAVOC_MAX_MULT = 128
+    HAVOC_MAX_MULT = 1000
     
     # Scale the perf_score to actual number of iterations
     # The division by 100 is to normalize the perf_score which started at base 100

@@ -62,12 +62,12 @@ def check_coverage(trace_bits, global_bitmap):
         if byte != 0:
             total_hits += 1
             if id not in global_bitmap:
-                global_bitmap[id] = 0
+                global_bitmap[id] = 1
                 new_edge_covered = True
             else:
                 global_bitmap[id] += 1
-    print(f'covered {total_hits} edges')
+    # print(f'covered {total_hits} edges')
 
-    print(f'Total unique edges: {len(global_bitmap)}')
+    # print(f'Total unique edges: {len(global_bitmap)}')
 
     return new_edge_covered, total_hits
