@@ -1,3 +1,0 @@
-So the queue is done by using a priority queue. the queue is sorted after each cycle and is sorted based on the favoured, then on exec time * file length. I prioritise a seed if the seed covers all branches found. There is a 10% chance that a random seed is picked from the queue to make sure the seeds are not starved.
-
-I make sure all the favoured seeds are used first before the favoured seeds. Then it goes down in a decending order. I keep track of the favoured seeds using a set and remove the entries based if used. The seeds are also tagged using a visited attribute.
